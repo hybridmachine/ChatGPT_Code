@@ -20,7 +20,7 @@ namespace FileHashGenerator
             
             outputFile.WriteLine("P/N  <PART NUMBER DESCRIPTION HERE>");
             outputFile.WriteLine();
-            
+
             foreach (var filePath in args)
             {
                 var fileName = Path.GetFileName(filePath);
@@ -31,7 +31,7 @@ namespace FileHashGenerator
                 outputFile.WriteLine();  
             }
 
-            outputFile.WriteLine(File.ReadAllText("template.txt"));
+            outputFile.WriteLine(GetEmbeddedResource("FileHashGenerator.template.txt"));
             outputFile.WriteLine();
         }
 
@@ -41,6 +41,19 @@ namespace FileHashGenerator
             using var sha256 = SHA256.Create();
             var hashBytes = sha256.ComputeHash(stream);
             return BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+        }
+
+        static string GetEmbeddedResource(string resourceName)
+        {
+            using var stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName);
+            if (null == stream)
+            {
+                Console.WriteLine("Template is missing!");
+                return String.Empty;                
+            }
+
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
         }
     }
 }
