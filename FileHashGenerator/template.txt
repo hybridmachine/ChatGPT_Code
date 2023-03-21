@@ -1,0 +1,30 @@
+How to get the checksum for a file to verify the file is not corrupt
+
+For Windows 10
+1) Download the file(s) to an empty directory
+2) Open a PowerShell command window in this directory
+	a) On Windows 10 in the folder window click "File->Open Windows PowerShell"
+3) Run the following command in PowerShell
+	a) Get-FileHash <file name>
+		Replace <file name> with the name of the file of intrest
+4) Note the value under the Hash column and match it with the value above. They should match exactly, if they do not, the file download was corrupt and the file should be re-downloaded and the process of Get-FileHash repeated.
+		
+Example
+
+Get-FileHash SonicBootloaderRev02.hex
+	
+Algorithm       Hash                                                                   Path
+---------       ----                                                                   ----
+SHA256          8B3EEA8427800E40949535B167B793D3EEFA0C20D02C1FBFBE8940580EA0FCEF       C:\Users\btabone\Desktop\SonicApplication\SonicBootloa...
+
+
+
+
+For Windows 7  NOTE: The computer must have Windows Management Framework 4.0 installed
+1) Download the files of interest to an empty directory
+2) From the Start button, type powershell in search field and open the PowerShell program
+3) At the PS U:\> prompt, typ cd and copy the directory of where the file(s) are located. The file directory must be in quotes
+4) Type dir to see the contents of the directory
+5) Hit return
+6) Type get-filehash, space, then tab to display the file of interest, and hit enter
+7) Note the value under the Hash column and match it with the value above. They should match exactly, if they do not, the file download was corrupt and the file should be re-downloaded and the process of Get-FileHash repeated.
