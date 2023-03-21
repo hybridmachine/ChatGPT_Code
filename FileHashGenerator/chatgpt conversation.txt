@@ -1,0 +1,442 @@
+Good morning. I'd like to collaborate on building a dotnet console app (.net 6.0) that will get the SHA-256 hashes for specified files and then write those sums into a text file. The console app should use a template for the output text file. It should place the file name and hash into the <FILENAME> and <HASH> locations in the template. If there is more than one file, it should add as many filename and hash rows (leaving a space between each group) as needed. Note the user can manually enter the part number description after the text file is output. Here's the template:
+-------------------------------------------
+P/N  <PART NUMBER DESCRIPTION HERE>
+
+File Name: <FILENAME>
+Hash: <HASH>
+
+How to get the checksum for a file to verify the file is not corrupt
+
+For Windows 10
+1) Download the file(s) to an empty directory
+2) Open a PowerShell command window in this directory
+	a) On Windows 10 in the folder window click "File->Open Windows PowerShell"
+3) Run the following command in PowerShell
+	a) Get-FileHash <file name>
+		Replace <file name> with the name of the file of intrest
+4) Note the value under the Hash column and match it with the value above. They should match exactly, if they do not, the file download was corrupt and the file should be re-downloaded and the process of Get-FileHash repeated.
+		
+Example
+
+Get-FileHash SonicBootloaderRev02.hex
+	
+Algorithm       Hash                                                                   Path
+---------       ----                                                                   ----
+SHA256          8B3EEA8427800E40949535B167B793D3EEFA0C20D02C1FBFBE8940580EA0FCEF       C:\Users\btabone\Desktop\SonicApplication\SonicBootloa...
+
+
+
+
+For Windows 7  NOTE: The computer must have Windows Management Framework 4.0 installed
+1) Download the files of interest to an empty directory
+2) From the Start button, type powershell in search field and open the PowerShell program
+3) At the PS U:\> prompt, typ cd and copy the directory of where the file(s) are located. The file directory must be in quotes
+4) Type dir to see the contents of the directory
+5) Hit return
+6) Type get-filehash, space, then tab to display the file of interest, and hit enter
+7) Note the value under the Hash column and match it with the value above. They should match exactly, if they do not, the file download was corrupt and the file should be re-downloaded and the process of Get-FileHash repeated.
+
+Good morning! I'd be happy to help you create a .NET 6.0 console application to generate the desired output. First, let's create a new console application project:
+
+    Open a terminal or command prompt.
+    Navigate to the desired folder where you want to create your project.
+    Run the following command:
+
+javascript
+
+dotnet new console -n FileHashGenerator
+
+    Change to the newly created project folder:
+
+bash
+
+cd FileHashGenerator
+
+    Open the "FileHashGenerator.csproj" file in your favorite text editor or IDE.
+
+Now, let's write the code to compute the SHA-256 hash for the specified files and generate the output text file with the provided template. Replace the contents of the "Program.cs" file with the following code:
+
+csharp
+
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+
+namespace FileHashGenerator
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Please provide file paths as arguments.");
+                return;
+            }
+
+            var outputPath = "output.txt";
+            using var outputFile = File.CreateText(outputPath);
+
+            foreach (var filePath in args)
+            {
+                var fileName = Path.GetFileName(filePath);
+                var hash = GetSha256Hash(filePath);
+
+                outputFile.WriteLine("-------------------------------------------");
+                outputFile.WriteLine("P/N  <PART NUMBER DESCRIPTION HERE>");
+                outputFile.WriteLine();
+                outputFile.WriteLine($"File Name: {fileName}");
+                outputFile.WriteLine($"Hash: {hash}");
+                outputFile.WriteLine();
+                outputFile.WriteLine(File.ReadAllText("template.txt"));
+                outputFile.WriteLine();
+            }
+        }
+
+        static string GetSha256Hash(string filePath)
+        {
+            using var stream = File.OpenRead(filePath);
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(stream);
+            return BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+        }
+    }
+}
+
+Additionally, create a file named "template.txt" in the project folder and paste the template you provided into it.
+
+Now, you can build and run the application by executing the following commands in your terminal or command prompt:
+
+php
+
+dotnet build
+dotnet run <file1> <file2> ... <fileN>
+
+Replace <file1>, <file2>, and so on with the paths to the files you want to generate hashes for.
+
+The application will create an "output.txt" file in the project folder containing the hashes and the template. The user can manually edit the part number description in the output file as needed.
+
+I hope this helps! Let me know if you have any questions or need further assistance.
+brian.tabone@gmail.com
+Thanks, that works. I did move the header and template sections out of the for loop, but other than that, perfect! Can I get a .gitignore file that tells git to ignore the .vscode/ , obj/, and bin/ directories?
+
+I'm glad the solution works for you! To create a .gitignore file that ignores the .vscode/, obj/, and bin/ directories, follow these steps:
+
+    Create a new file in your project's root directory called .gitignore (make sure it starts with a dot).
+
+    Open the .gitignore file in your favorite text editor or IDE.
+
+    Add the following content to the .gitignore file:
+
+python
+
+# Ignore Visual Studio Code settings
+.vscode/
+
+# Ignore build output directories
+bin/
+obj/
+
+    Save the .gitignore file.
+
+Now, when you use git to manage your project, it will ignore the specified directories, and they will not be tracked or committed to your repository.
+
+Let me know if you need any further assistance!
+brian.tabone@gmail.com
+Thanks, that did the trick. How do I tell dotnet to build a standalone EXE?
+
+To build a standalone executable (EXE) using .NET 6.0, you'll need to publish your application as a self-contained deployment. This will include the .NET runtime and libraries along with your application, so the executable can run on target machines without requiring the .NET runtime to be installed.
+
+Follow these steps to publish your application as a standalone executable:
+
+    Open a terminal or command prompt and navigate to your project folder (the one containing the FileHashGenerator.csproj file).
+
+    Run the following command:
+
+bash
+
+dotnet publish -r <runtime_identifier> --self-contained true -c Release /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishTrimmed=true
+
+Replace <runtime_identifier> with the appropriate runtime identifier for the target platform. Some common runtime identifiers are:
+
+    win-x64 for Windows x64
+    win-arm64 for Windows ARM64
+    linux-x64 for Linux x64
+    osx-x64 for macOS x64
+
+For example, if you want to build a standalone executable for Windows x64, the command would be:
+
+bash
+
+dotnet publish -r win-x64 --self-contained true -c Release /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishTrimmed=true
+
+    After the publish process is complete, you'll find the standalone executable in the following folder:
+
+javascript
+
+<FileHashGenerator_project_folder>/bin/Release/net6.0/<runtime_identifier>/publish/
+
+Replace <FileHashGenerator_project_folder> with the path to your project folder and <runtime_identifier> with the runtime identifier you used in step 2.
+
+This standalone executable can be distributed and run on the target platform without requiring the .NET runtime to be installed.
+
+Please note that the standalone executable will be larger in size than a framework-dependent deployment, as it includes the .NET runtime and libraries. The PublishTrimmed option in the command will help reduce the size by trimming unused code, but be aware that this might cause issues if your application uses reflection or other dynamic features.
+
+Let me know if you have any questions or need further assistance!
+brian.tabone@gmail.com
+Can I embed the template as a resource in the published binary?
+
+Yes, you can embed the template as a resource in the published binary. Here's how to do that:
+
+    Add the following line inside the <PropertyGroup> element in your FileHashGenerator.csproj file:
+
+xml
+
+<EmbeddedResource Include="template.txt" />
+
+Your FileHashGenerator.csproj should now look like this:
+
+xml
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EmbeddedResource Include="template.txt" />
+  </PropertyGroup>
+
+</Project>
+
+    Save the changes to the FileHashGenerator.csproj file.
+
+    Modify the Program.cs file to read the embedded resource instead of the file from disk. Replace the File.ReadAllText("template.txt") line with the following code:
+
+csharp
+
+GetEmbeddedResource("FileHashGenerator.template.txt")
+
+    Add the GetEmbeddedResource method to the Program class in the Program.cs file:
+
+csharp
+
+static string GetEmbeddedResource(string resourceName)
+{
+    using var stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName);
+    using var reader = new StreamReader(stream);
+    return reader.ReadToEnd();
+}
+
+Your Program.cs file should now look like this:
+
+csharp
+
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+
+namespace FileHashGenerator
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Please provide file paths as arguments.");
+                return;
+            }
+
+            var outputPath = "output.txt";
+            using var outputFile = File.CreateText(outputPath);
+
+            foreach (var filePath in args)
+            {
+                var fileName = Path.GetFileName(filePath);
+                var hash = GetSha256Hash(filePath);
+
+                outputFile.WriteLine("-------------------------------------------");
+                outputFile.WriteLine("P/N  <PART NUMBER DESCRIPTION HERE>");
+                outputFile.WriteLine();
+                outputFile.WriteLine($"File Name: {fileName}");
+                outputFile.WriteLine($"Hash: {hash}");
+                outputFile.WriteLine();
+                outputFile.WriteLine(GetEmbeddedResource("FileHashGenerator.template.txt"));
+                outputFile.WriteLine();
+            }
+        }
+
+        static string GetSha256Hash(string filePath)
+        {
+            using var stream = File.OpenRead(filePath);
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(stream);
+            return BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+        }
+
+        static string GetEmbeddedResource(string resourceName)
+        {
+            using var stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+    }
+}
+
+    Save the changes to the Program.cs file.
+
+Now, when you build and publish your application, the template.txt file will be embedded as a resource in the binary. The application will read the template from the embedded resource instead of looking for an external file.
+
+Let me know if you have any questions or need further assistance!
+brian.tabone@gmail.com
+Thanks, this all works. I need a function that will read the output.txt, and check the sha256 for the specified file and confirm that what is in the output.txt matches what is calculated for the file
+
+You're welcome! To add a function that reads the output.txt file, checks the SHA-256 hash for the specified file, and confirms that it matches the hash in the output.txt file, follow these steps:
+
+    Add a new method called VerifyHashes to the Program class in the Program.cs file:
+
+csharp
+
+static void VerifyHashes(string outputPath)
+{
+    var fileLines = File.ReadAllLines(outputPath);
+    for (int i = 0; i < fileLines.Length; i++)
+    {
+        var line = fileLines[i];
+        if (line.StartsWith("File Name: "))
+        {
+            var fileName = line.Substring("File Name: ".Length);
+            var expectedHash = fileLines[++i].Substring("Hash: ".Length);
+
+            var actualHash = GetSha256Hash(fileName);
+
+            if (expectedHash.Equals(actualHash, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"File: {fileName} - Hash Match: {actualHash}");
+            }
+            else
+            {
+                Console.WriteLine($"File: {fileName} - Hash Mismatch! Expected: {expectedHash}, Actual: {actualHash}");
+            }
+        }
+    }
+}
+
+    Call the VerifyHashes method in the Main method after writing the output.txt file. Add the following line after the foreach loop in the Main method:
+
+csharp
+
+VerifyHashes(outputPath);
+
+Your Program.cs file should now look like this:
+
+csharp
+
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+
+namespace FileHashGenerator
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("Please provide file paths as arguments.");
+                return;
+            }
+
+            var outputPath = "output.txt";
+            using var outputFile = File.CreateText(outputPath);
+
+            foreach (var filePath in args)
+            {
+                var fileName = Path.GetFileName(filePath);
+                var hash = GetSha256Hash(filePath);
+
+                outputFile.WriteLine("-------------------------------------------");
+                outputFile.WriteLine("P/N  <PART NUMBER DESCRIPTION HERE>");
+                outputFile.WriteLine();
+                outputFile.WriteLine($"File Name: {fileName}");
+                outputFile.WriteLine($"Hash: {hash}");
+                outputFile.WriteLine();
+                outputFile.WriteLine(GetEmbeddedResource("FileHashGenerator.template.txt"));
+                outputFile.WriteLine();
+            }
+
+            VerifyHashes(outputPath);
+        }
+
+        static string GetSha256Hash(string filePath)
+        {
+            using var stream = File.OpenRead(filePath);
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(stream);
+            return BitConverter.ToString(hashBytes).Replace("-", string.Empty);
+        }
+
+        static string GetEmbeddedResource(string resourceName)
+        {
+            using var stream = typeof(Program).Assembly.GetManifestResourceStream(resourceName);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
+        static void VerifyHashes(string outputPath)
+        {
+            var fileLines = File.ReadAllLines(outputPath);
+            for (int i = 0; i < fileLines.Length; i++)
+            {
+                var line = fileLines[i];
+                if (line.StartsWith("File Name: "))
+                {
+                    var fileName = line.Substring("File Name: ".Length);
+                    var expectedHash = fileLines[++i].Substring("Hash: ".Length);
+
+                    var actualHash = GetSha256Hash(fileName);
+
+                    if (expectedHash.Equals(actualHash, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine($"File: {fileName} - Hash Match: {actualHash}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"File: {fileName} - Hash Mismatch! Expected: {expectedHash}, Actual:
+
+brian.tabone@gmail.com
+Thanks! In C#, is there a way to pop an argument off the array once you have read it?
+
+Yes, in C#, you can remove an element from an array by creating a new array without that element. While you can't directly modify the original array since arrays have a fixed size, you can create a helper method to create a new array without the specified index.
+
+Here's a helper method RemoveAt that removes an element at a given index from an array:
+
+csharp
+
+public static T[] RemoveAt<T>(T[] source, int index)
+{
+    T[] destination = new T[source.Length - 1];
+    if (index > 0)
+        Array.Copy(source, 0, destination, 0, index);
+
+    if (index < source.Length - 1)
+        Array.Copy(source, index + 1, destination, index, source.Length - index - 1);
+
+    return destination;
+}
+
+To use this helper method, you can call it like this:
+
+csharp
+
+args = RemoveAt(args, indexToRemove);
+
+Replace indexToRemove with the index of the element you want to remove from the args array. This will create a new array without the element at the specified index and assign it back to args.
+
+Keep in mind that this approach is not the most efficient for large arrays or frequent removals. If you need to perform multiple removals or modifications to the array, consider using a List<T> instead of an array, as it provides more flexibility and efficient methods for adding, removing, and modifying elements.

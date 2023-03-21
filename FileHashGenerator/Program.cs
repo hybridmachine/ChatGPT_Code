@@ -14,10 +14,15 @@ namespace FileHashGenerator
                 Console.WriteLine("Please provide file paths as arguments.");
                 return;
             }
+            else if (args[0] == "-v")
+            {
+                VerifyHashes(args[1]);
+                return;
+            }
 
             var outputPath = "README.txt";
             using var outputFile = File.CreateText(outputPath);
-            
+
             outputFile.WriteLine("P/N  <PART NUMBER DESCRIPTION HERE>");
             outputFile.WriteLine();
 
@@ -28,7 +33,7 @@ namespace FileHashGenerator
 
                 outputFile.WriteLine($"File Name: {fileName}");
                 outputFile.WriteLine($"Hash: {hash}");
-                outputFile.WriteLine();  
+                outputFile.WriteLine();
             }
 
             outputFile.WriteLine(GetEmbeddedResource("FileHashGenerator.template.txt"));
@@ -49,11 +54,37 @@ namespace FileHashGenerator
             if (null == stream)
             {
                 Console.WriteLine("Template is missing!");
-                return String.Empty;                
+                return String.Empty;
             }
 
             using var reader = new StreamReader(stream);
             return reader.ReadToEnd();
         }
+
+        static void VerifyHashes(string outputPath)
+        {
+            var fileLines = File.ReadAllLines(outputPath);
+            for (int i = 0; i < fileLines.Length; i++)
+            {
+                var line = fileLines[i];
+                if (line.StartsWith("File Name: "))
+                {
+                    var fileName = line.Substring("File Name: ".Length);
+                    var expectedHash = fileLines[++i].Substring("Hash: ".Length);
+
+                    var actualHash = GetSha256Hash(fileName);
+
+                    if (expectedHash.Equals(actualHash, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Console.WriteLine($"File: {fileName} - Hash Match: {actualHash}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"File: {fileName} - Hash Mismatch! Expected: {expectedHash}, Actual: {actualHash}");
+                    }
+                }
+            }
+        }
+
     }
 }
