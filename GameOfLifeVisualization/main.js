@@ -25,6 +25,10 @@ function initializeRPentomino() {
     grid[midRow + 1][midCol] = 1;
 }
 
+function deepCopyGrid(grid) {
+    return grid.map(row => row.slice());
+}
+
 
 function computeNextGeneration() {
     for (let row = 0; row < numRows; row++) {
@@ -82,49 +86,54 @@ function createCube(row, col) {
 }
 
 
+const gridHistory = [];
 const maxGenerationsToShow = 3;
 
-function updateCubes() {
-    const objectsToRemove = [];
+function animate() {
+    requestAnimationFrame(animate);
+  
+    const currentGrid = deepCopyGrid(grid);
+    gridHistory.unshift(currentGrid);
+  
+    if (gridHistory.length > maxGenerationsToShow) {
+      gridHistory.pop();
+    }
+  
+    computeNextGeneration();
+    updateCubes();
+  
+    renderer.render(scene, camera);
+  }
+  
 
+function updateCubes() {
     scene.traverse((object) => {
         if (object.isMesh) {
-            object.userData.generation += 1;
-            if (object.userData.generation >= maxGenerationsToShow) {
-                objectsToRemove.push(object);
-            } else {
-                object.position.z -= (cubeSize + gap);
-                object.material.opacity = 1 - object.userData.generation / maxGenerationsToShow;
-                object.material.transparent = true;
-            }
+            scene.remove(object);
         }
     });
 
-    objectsToRemove.forEach((object) => {
-        scene.remove(object);
-    });
+    gridHistory.forEach((grid, generation) => {
+        const zOffset = generation * (cubeSize + gap);
+        const opacity = 1 - generation / maxGenerationsToShow;
 
-    for (let row = 0; row < numRows; row++) {
-        for (let col = 0; col < numCols; col++) {
-            if (grid[row][col] === 1) {
-                const cube = createCube(row, col);
-                cube.userData.generation = 0;
-                scene.add(cube);
+        for (let row = 0; row < numRows; row++) {
+            for (let col = 0; col < numCols; col++) {
+                if (grid[row][col] === 1) {
+                    const cube = createCube(row, col);
+                    cube.material.opacity = opacity;
+                    cube.material.transparent = true;
+                    cube.position.z += zOffset;
+                    scene.add(cube);
+                }
             }
         }
-    }
+    });
 }
 
-
-camera.position.z = numRows * (cubeSize + gap);
-
-function animate() {
-
-    updateCubes();
-    renderer.render(scene, camera);
-
-    requestAnimationFrame(animate);
-}
+// Set the camera position to look at the grid from the side
+camera.position.set(0, numRows * (cubeSize + gap) / 2, numRows * (cubeSize + gap));
+camera.lookAt(new THREE.Vector3(0, numRows * (cubeSize + gap) / 2, 0));
 
 animate();
 
